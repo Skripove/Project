@@ -1,17 +1,16 @@
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
 const ImageMinimizerPlugin = require("image-minimizer-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
 const isProd = process.env.NODE_ENV === "production";
 
-const filename = (ext) => isProd ? `[name].[contenthash].${ext}` : `[name].bundle.${ext}`;
+const filename = (ext) =>
+  isProd ? `[name].[contenthash].${ext}` : `[name].bundle.${ext}`;
 
 const plugins = () => {
   const basePlugins = [
-    new CleanWebpackPlugin(),
     new HtmlWebpackPlugin({
       favicon: "./assets/favicon.ico",
       filename: "index.html",
@@ -22,11 +21,11 @@ const plugins = () => {
     }),
     new MiniCssExtractPlugin({
       filename: `css/${filename("css")}`,
-      // chunkFilename: isProd ? "[id].[contenthash].css" : "[id].bundle.css"
+      chunkFilename: isProd ? "[id].[contenthash].css" : "[id].bundle.css",
     }),
   ];
 
-  if(isProd){
+  if (isProd) {
     basePlugins.push(
       new ImageMinimizerPlugin({
         minimizerOptions: {
@@ -39,11 +38,11 @@ const plugins = () => {
               {
                 plugins: [
                   {
-                    name: 'preset-default',
+                    name: "preset-default",
                     params: {
                       overrides: {
                         builtinPluginName: {
-                          optionName: 'optionValue',
+                          optionName: "optionValue",
                         },
                         anotherBuiltinPlugin: false,
                       },
@@ -55,45 +54,84 @@ const plugins = () => {
           ],
         },
       })
-    )
+    );
   }
 
   return basePlugins;
-}
+};
 
 module.exports = {
-  mode: "development",
-  entry: "./src//index.tsx",
+  entry: "./src/index.tsx",
   output: {
-    filename: `js/${filename("js")}`,
     path: path.resolve(__dirname, "dist"),
+    filename: `js/${filename("js")}`,
     assetModuleFilename: "assets/[hash][ext][query]",
+    clean: true,
   },
+  mode: isProd ? "production" : "development",
   resolve: {
-    extensions: [".js", ".jsx", ".ts", ".tsx", ".scss", ".css", ".svg", ".ico", ".json"],
     alias: {
       "@app": path.resolve(__dirname, "src"),
       "@assets": path.resolve(__dirname, "assets"),
     },
+    extensions: [
+      ".js",
+      ".jsx",
+      ".ts",
+      ".tsx",
+      ".scss",
+      ".css",
+      ".svg",
+      ".ico",
+      ".json",
+    ],
   },
   devtool: isProd ? false : "source-map",
   module: {
     rules: [
       {
+        test: /\.m?js$/,
+        exclude: /(node_modules|bower_components)/,
+        use: {
+          loader: "babel-loader",
+          options: {
+            presets: ["@babel/preset-env"],
+          },
+        },
+      },
+      {
         test: /\.tsx?$/,
-        use: 'ts-loader',
+        use: "ts-loader",
         exclude: /node_modules/,
       },
       {
-        test: /\.(s[ac]|c)ss$/i,
+        test: /\.html$/,
+        use: "html-loader",
+      },
+      {
+        test: /\.(sa|sc|c)ss$/,
         use: [
-          {
-            loader: MiniCssExtractPlugin.loader,
-            options:{
-              publicPath: "../",
-            }
-          },
+          isProd
+            ? {
+                loader: MiniCssExtractPlugin.loader,
+              }
+            : "style-loader",
           "css-loader",
+          {
+            loader: "postcss-loader",
+            options: {
+              postcssOptions: {
+                plugins: [
+                  [
+                    "postcss-preset-env",
+                    {
+                      // Options
+                    },
+                  ],
+                ],
+              },
+            },
+          },
           "sass-loader",
         ],
       },
@@ -113,14 +151,14 @@ module.exports = {
   },
   devServer: {
     historyApiFallback: true,
-    open: false,
+    open: true,
     compress: true,
     port: 9000,
-    // hot: true,
+    hot: true,
     // proxy: {
     //   '/api/**': {
     //     target: 'http://localhost:8080',
     //   }
     // },
-  }
+  },
 };
