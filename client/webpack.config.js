@@ -150,11 +150,14 @@ module.exports = {
     minimizer: [`...`, new CssMinimizerPlugin()],
   },
   devServer: {
+    static: {
+      directory: path.join(__dirname, "public"),
+    },
     historyApiFallback: true,
-    open: true,
+    // open: true,
     compress: true,
     port: 9000,
-    hot: true,
+    // hot: true,
     // proxy: {
     //   '/api/**': {
     //     target: 'http://localhost:8080',
